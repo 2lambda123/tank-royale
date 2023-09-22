@@ -79,7 +79,10 @@ class ModelUpdater(
      */
     fun update(botIntents: Map<BotId, IBotIntent>): GameState {
         updateBotIntents(botIntents)
-        if (round.roundEnded || (round.roundNumber == 0 && turn.turnNumber == 0)) {
+
+        round.incrementTurnSinceRoundEndedIfRoundHasEnded()
+
+        if (round.canStartNewRound) {
             nextRound()
         }
         nextTurn()
@@ -863,7 +866,7 @@ class ModelUpdater(
 
     /** Checks and handles if the round is ended or game is over. */
     private fun checkAndHandleRoundOrGameOver() {
-        if (isRoundOver()) {
+        if (isRoundOver() && !round.roundEnded) {
             round.apply {
                 roundEnded = true
                 if (roundNumber >= setup.numberOfRounds) {
@@ -877,7 +880,9 @@ class ModelUpdater(
                 val scores = scoreTracker.getBotScores().sortedByDescending { it.totalScore }
                 if (winnerId == null && scores.isNotEmpty()) {
                     winnerId = scores[0].teamOrBotId.botId
-                    turn.addPrivateBotEvent(winnerId, WonRoundEvent(turn.turnNumber))
+                    val wonRoundEvent = WonRoundEvent(turn.turnNumber)
+                    turn.addPrivateBotEvent(winnerId, wonRoundEvent)
+                    // observers get the results with the RoundEndedEvent and can see which bot/team that won the round
                 }
             }
         }

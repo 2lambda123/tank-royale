@@ -448,7 +448,7 @@ class GameServer(
                 broadcastGameTickToObservers(roundNumber, this)
 
                 // Send round ended _after_ tick has been sent
-                if (roundEnded) {
+                if (roundEndedThisTurn) {
                     log.debug("Round ended: $roundNumber")
                     broadcastRoundEndedToParticipants(roundNumber, turnNumber)
                     broadcastRoundEndedToObservers(roundNumber, turnNumber)
