@@ -142,7 +142,6 @@ class ModelUpdater(
         checkAndHandleInactivity()
         checkForAndHandleDisabledBots()
         checkAndHandleDefeatedBots()
-        checkFor1stPlace()
 
         checkAndHandleRoundOrGameOver()
 
