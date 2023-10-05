@@ -870,7 +870,6 @@ class ModelUpdater(
                     if (scores.isNotEmpty()) {
                         winnerId = scores[0].participantId.botId
                         turn.addPrivateBotEvent(winnerId!!, WonRoundEvent(turn.turnNumber))
-                        println("### WonEvent sent ###")
                     }
                 }
             }
