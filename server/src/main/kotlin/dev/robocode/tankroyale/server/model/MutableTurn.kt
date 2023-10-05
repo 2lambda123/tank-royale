@@ -33,22 +33,16 @@ data class MutableTurn(
     }
 
     /**
-     * Adds a private bot event.
+     * Adds a private bot event to for a specific bot.
      * @param botId is the bot id.
      * @param event is the bot event, only given to the specified bot.
      */
     fun addPrivateBotEvent(botId: BotId, event: Event) {
-        // Only a specific bot retrieves the event, not any other bot
-        var botEvents: MutableSet<Event>? = botEvents[botId]
-        if (botEvents == null) {
-            botEvents = HashSet()
-            this.botEvents[botId] = botEvents
-        }
-        botEvents.add(event)
+        botEvents.getOrPut(botId) { HashSet() }.add(event)
     }
 
     /**
-     * Adds a public bot event.
+     * Adds a public bot event to every bot.
      * @param event is the bot event.
      */
     fun addPublicBotEvent(event: Event) {
