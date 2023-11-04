@@ -36,8 +36,10 @@ class ModelUpdater(
     /** Droid flags */
     private val droidFlags: Map<BotId, Boolean /* isDroid */>,
 ) {
-    /** Score keeper */
-    private val scoreTracker: ScoreTracker = ScoreTracker(participantIds)
+    /** Score tracking */
+    private val scoreTracker = ScoreTracker(participantIds)
+    private val scoreCalculator = ScoreCalculator(participantIds, scoreTracker)
+    private val accumulatedScoreCalculator = AccumulatedScoreCalculator()
 
     /** Map over all bots */
     private val botsMap = mutableMapOf<BotId, MutableBot>()
@@ -865,12 +867,10 @@ class ModelUpdater(
                 var winnerId = botsMap.entries.firstOrNull { (_, bot) -> bot.isAlive }?.key
 
                 // Otherwise, the bot with the highest score wins
-                winnerId?.let {
-                    val scores = scoreTracker.getScores()
-                    if (scores.isNotEmpty()) {
-                        winnerId = scores[0].participantId.botId
-                        turn.addPrivateBotEvent(winnerId!!, WonRoundEvent(turn.turnNumber))
-                    }
+                val scores = scoreTracker.getScores().sortedByDescending { it.totalScore }
+                if (winnerId == null && scores.isNotEmpty()) {
+                    winnerId = scores[0].participantId.botId
+                    turn.addPrivateBotEvent(winnerId, WonRoundEvent(turn.turnNumber))
                 }
             }
         }
