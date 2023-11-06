@@ -3,6 +3,8 @@ package dev.robocode.tankroyale.server.core
 import dev.robocode.tankroyale.server.Server
 import dev.robocode.tankroyale.server.dev.robocode.tankroyale.server.model.InitialPosition
 import dev.robocode.tankroyale.server.dev.robocode.tankroyale.server.model.ParticipantId
+import dev.robocode.tankroyale.server.dev.robocode.tankroyale.server.score.AccumulatedScoreCalculator
+import dev.robocode.tankroyale.server.dev.robocode.tankroyale.server.score.ScoreCalculator
 import dev.robocode.tankroyale.server.event.*
 import dev.robocode.tankroyale.server.model.*
 import dev.robocode.tankroyale.server.model.Color.Companion.fromString
@@ -68,8 +70,8 @@ class ModelUpdater(
     /** Inactivity counter */
     private var inactivityCounter = 0
 
-    /** The current results ordered with higher total scores first */
-    fun getResults() = scoreTracker.getScores()
+    /** The accumulated results ordered with higher total scores first */
+    fun getResults() = accumulatedScoreCalculator.getScores()
 
     /** The number of rounds played so far */
     val numberOfRounds: Int get() = gameState.rounds.size
@@ -863,15 +865,15 @@ class ModelUpdater(
                     gameState.isGameEnded = true // Game over
                 }
 
-                // The winner is the last bot remaining, if any bots are left
-                var winnerId = botsMap.entries.firstOrNull { (_, bot) -> bot.isAlive }?.key
-
-                // Otherwise, the bot with the highest score wins
-                val scores = scoreTracker.getScores().sortedByDescending { it.totalScore }
-                if (winnerId == null && scores.isNotEmpty()) {
-                    winnerId = scores[0].participantId.botId
-                    turn.addPrivateBotEvent(winnerId, WonRoundEvent(turn.turnNumber))
+                val scores = scoreCalculator.getScores()
+                if (scores.isNotEmpty()) {
+                    val winners = scores.filter { it.rank == 1}
+                    winners.forEach {
+                        val botId = it.participantId.botId
+                        turn.addPrivateBotEvent(botId, WonRoundEvent(turn.turnNumber))
+                    }
                 }
+                accumulatedScoreCalculator.addScores(scores)
             }
         }
     }
