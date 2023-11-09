@@ -11,23 +11,27 @@ data class MutableRound(
 
 ) : IRound {
 
-    override var roundEnded: Boolean
-        get() = turnsSinceRoundEnded >= 0
-        set(ended) {
-            turnsSinceRoundEnded = if (ended) 0 else -1
+    override fun setRoundEnded(ended: Boolean) {
+        turnsSinceRoundEnded = if (ended) {
+            maxOf(turnsSinceRoundEnded, 0)
+        } else {
+            -1
         }
+    }
 
-    override val roundEndedThisTurn: Boolean
-        get() = turnsSinceRoundEnded == 0
+    override fun isRoundEnded() = turnsSinceRoundEnded >= 0
 
-    override val canStartNewRound: Boolean
-        get() = turnsSinceRoundEnded >= NUMBER_OF_TURNS_AFTER_ROUND_ENDED || isFirstTurn()
+    override fun hasRoundEndedThisTurn() = turnsSinceRoundEnded == 0
+
+    override fun canStartNewRound() = isFirstTurn() || isTurnsSinceRoundEndedReached()
 
     fun incrementTurnSinceRoundEndedIfRoundHasEnded() {
         if (turnsSinceRoundEnded >= 0) {
             turnsSinceRoundEnded++
         }
     }
+
+    private fun isTurnsSinceRoundEndedReached() = turnsSinceRoundEnded >= NUMBER_OF_TURNS_AFTER_ROUND_ENDED
 
     private fun isFirstTurn() = (roundNumber == 0 && (lastTurn?.turnNumber ?: 0) == 0)
 }

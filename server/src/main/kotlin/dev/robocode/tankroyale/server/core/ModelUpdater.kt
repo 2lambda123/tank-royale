@@ -83,10 +83,14 @@ class ModelUpdater(
      */
     fun update(botIntents: Map<BotId, IBotIntent>): GameState {
         updateBotIntents(botIntents)
-        if (round.roundEnded || (round.roundNumber == 0 && turn.turnNumber == 0)) {
+
+        if (round.canStartNewRound()) {
             nextRound()
         }
         nextTurn()
+
+        round.incrementTurnSinceRoundEndedIfRoundHasEnded()
+
         return updateGameState()
     }
 
@@ -106,9 +110,10 @@ class ModelUpdater(
     /** Proceed with the next round. */
     private fun nextRound() {
         round = round.copy(roundNumber = round.roundNumber).apply {
-            roundEnded = false
+            setRoundEnded(false)
             roundNumber++
         }
+
         turn.turnNumber = 0
 
         nextBulletId = 0
@@ -858,9 +863,10 @@ class ModelUpdater(
 
     /** Checks and handles if the round is ended or game is over. */
     private fun checkAndHandleRoundOrGameOver() {
-        if (isRoundOver()) {
+        if (isRoundOver() && !round.isRoundEnded()) {
             round.apply {
-                roundEnded = true
+                setRoundEnded(true)
+
                 if (roundNumber >= setup.numberOfRounds) {
                     gameState.isGameEnded = true // Game over
                 }

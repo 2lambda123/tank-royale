@@ -10,14 +10,19 @@ interface IRound {
     /** List of turns */
     val turns: List<ITurn>
 
-    /** Flag specifying if round has ended this turn or some turns ago */
-    val roundEnded: Boolean
+    /** Set round to ended */
+    fun setRoundEnded(ended: Boolean)
 
-    /** Flag specifying if round has ended this exact turn */
-    val roundEndedThisTurn: Boolean
+    /** Check if round has ended */
+    fun isRoundEnded(): Boolean
 
-    /** Flag specifying if a new round can be started (some turns after round has ended) */
-    val canStartNewRound: Boolean
+    /** Check if round has ended at this last turn in the round */
+    fun hasRoundEndedThisTurn(): Boolean
+
+    /** Check if a new round can be started.
+     * (when round has ended and a certain number of turns have passed as well).
+     */
+    fun canStartNewRound(): Boolean
 
     /** Last turn */
     val lastTurn: ITurn? get() = if (turns.isNotEmpty()) turns[turns.size - 1] else null
