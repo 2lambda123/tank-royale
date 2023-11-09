@@ -19,6 +19,8 @@ data class MutableRound(
         }
     }
 
+    override fun isRoundRunning() = turnsSinceRoundEnded < 0
+
     override fun isRoundEnded() = turnsSinceRoundEnded >= 0
 
     override fun hasRoundEndedThisTurn() = turnsSinceRoundEnded == 0

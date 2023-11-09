@@ -13,6 +13,9 @@ interface IRound {
     /** Set round to ended */
     fun setRoundEnded(ended: Boolean)
 
+    /** Check if round is still running */
+    fun isRoundRunning(): Boolean
+
     /** Check if round has ended */
     fun isRoundEnded(): Boolean
 

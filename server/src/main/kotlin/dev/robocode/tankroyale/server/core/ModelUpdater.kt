@@ -396,12 +396,14 @@ class ModelUpdater(
         val energyBonus = BULLET_HIT_ENERGY_GAIN_FACTOR * bullet.power
         botsMap[botId]?.changeEnergy(energyBonus)
 
-        scoreTracker.registerBulletHit(
-            teamOrBotId,
-            victimTeamOrBotId,
-            damage,
-            isKilled
-        )
+        if (round.isRoundRunning()) { // Scoring is over, when the round is over
+            scoreTracker.registerBulletHit(
+                teamOrBotId,
+                victimTeamOrBotId,
+                damage,
+                isKilled
+            )
+        }
 
         val bulletHitBotEvent = BulletHitBotEvent(turn.turnNumber, bullet, victimId, damage, bot.energy)
         turn.apply {
@@ -505,7 +507,9 @@ class ModelUpdater(
         val isBot2RammingBot1 = isRamming(bot2, bot1)
 
         // Both bots take damage when hitting each other
-        registerRamHit(bot1, bot2, isBot1RammingBot2, isBot2RammingBot1)
+        if (round.isRoundRunning()) { // Scoring is over, when the round is over
+            registerRamHit(bot1, bot2, isBot1RammingBot2, isBot2RammingBot1)
+        }
 
         // Restore both bot´s old position
         val lastTurn = round.lastTurn
@@ -662,8 +666,10 @@ class ModelUpdater(
 
     /** Checks and handles if any bots have been defeated. */
     private fun checkAndHandleDefeatedBots() {
+        if (round.isRoundEnded()) return
+
         val deadBotIds =
-            botsMap.values.filter { it.isDead }.map { bot -> participantIds.first { it.botId == bot.id } }.toSet()
+        botsMap.values.filter { it.isDead }.map { bot -> participantIds.first { it.botId == bot.id } }.toSet()
 
         deadBotIds.forEach {
             val botDeathEvent = BotDeathEvent(turn.turnNumber, it.botId)
