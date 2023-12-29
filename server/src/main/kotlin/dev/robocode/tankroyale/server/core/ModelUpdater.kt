@@ -83,10 +83,14 @@ class ModelUpdater(
      */
     fun update(botIntents: Map<BotId, IBotIntent>): GameState {
         updateBotIntents(botIntents)
-        if (round.roundEnded || (round.roundNumber == 0 && turn.turnNumber == 0)) {
+
+        if (round.canStartNewRound()) {
             nextRound()
         }
         nextTurn()
+
+        round.incrementTurnSinceRoundEndedIfRoundHasEnded()
+
         return updateGameState()
     }
 
@@ -106,9 +110,10 @@ class ModelUpdater(
     /** Proceed with the next round. */
     private fun nextRound() {
         round = round.copy(roundNumber = round.roundNumber).apply {
-            roundEnded = false
+            setRoundEnded(false)
             roundNumber++
         }
+
         turn.turnNumber = 0
 
         nextBulletId = 0
@@ -389,12 +394,14 @@ class ModelUpdater(
         val energyBonus = BULLET_HIT_ENERGY_GAIN_FACTOR * bullet.power
         botsMap[botId]?.changeEnergy(energyBonus)
 
-        scoreTracker.registerBulletHit(
-            teamOrBotId,
-            victimTeamOrBotId,
-            damage,
-            isKilled
-        )
+        if (round.isRoundRunning()) { // Scoring is over, when the round is over
+            scoreTracker.registerBulletHit(
+                teamOrBotId,
+                victimTeamOrBotId,
+                damage,
+                isKilled
+            )
+        }
 
         val bulletHitBotEvent = BulletHitBotEvent(turn.turnNumber, bullet, victimId, damage, bot.energy)
         turn.apply {
@@ -498,7 +505,9 @@ class ModelUpdater(
         val isBot2RammingBot1 = isRamming(bot2, bot1)
 
         // Both bots take damage when hitting each other
-        registerRamHit(bot1, bot2, isBot1RammingBot2, isBot2RammingBot1)
+        if (round.isRoundRunning()) { // Scoring is over, when the round is over
+            registerRamHit(bot1, bot2, isBot1RammingBot2, isBot2RammingBot1)
+        }
 
         // Restore both bot´s old position
         val lastTurn = round.lastTurn
@@ -655,8 +664,10 @@ class ModelUpdater(
 
     /** Checks and handles if any bots have been defeated. */
     private fun checkAndHandleDefeatedBots() {
+        if (round.isRoundEnded()) return
+
         val deadBotIds =
-            botsMap.values.filter { it.isDead }.map { bot -> participantIds.first { it.botId == bot.id } }.toSet()
+        botsMap.values.filter { it.isDead }.map { bot -> participantIds.first { it.botId == bot.id } }.toSet()
 
         deadBotIds.forEach {
             val botDeathEvent = BotDeathEvent(turn.turnNumber, it.botId)
@@ -856,9 +867,10 @@ class ModelUpdater(
 
     /** Checks and handles if the round is ended or game is over. */
     private fun checkAndHandleRoundOrGameOver() {
-        if (isRoundOver()) {
+        if (isRoundOver() && !round.isRoundEnded()) {
             round.apply {
-                roundEnded = true
+                setRoundEnded(true)
+
                 if (roundNumber >= setup.numberOfRounds) {
                     gameState.isGameEnded = true // Game over
                 }
