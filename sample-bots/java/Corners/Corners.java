@@ -1,5 +1,6 @@
 import dev.robocode.tankroyale.botapi.*;
 import dev.robocode.tankroyale.botapi.events.*;
+import java.security.SecureRandom;
 
 import java.util.Random;
 
@@ -58,7 +59,7 @@ public class Corners extends Bot {
 
     // Returns a random corner (0, 90, 180, 270)
     private static int randomCorner() {
-        return 90 * new Random().nextInt(4); // Random number is between 0-3
+        return 90 * new SecureRandom().nextInt(4); // Random number is between 0-3
     }
 
     // A very inefficient way to get to a corner.
